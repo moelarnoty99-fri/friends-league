@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRIENDS LEAGUE</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#0b1712; --panel:#14251c; --green:#214c35;
+  --gold:#d8b45c; --white:#f5f5ed; --muted:#91a397;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--white);
+font-family:Arial,sans-serif}
+header{padding:25px 6%;background:#10241a;
+border-bottom:1px solid #294333;display:flex;
+justify-content:space-between;align-items:center;gap:15px}
+.logo{font-size:23px;font-weight:900;letter-spacing:1px}
+.logo span{color:var(--gold)}
+.season{color:var(--muted);font-size:12px;margin-top:6px}
+button{cursor:pointer;border:0;border-radius:8px;
+padding:11px 17px;font-weight:bold}
+.gold{background:var(--gold);color:#17231a}
+.dark{background:var(--green);color:white}
+main{max-width:1100px;margin:auto;padding:25px 18px}
+.hero{background:linear-gradient(120deg,#1c4931,#10251b);
+border:1px solid #345941;border-radius:18px;padding:30px;
+margin-bottom:22px}
+.hero small{color:var(--gold);letter-spacing:3px}
+.hero h1{font-size:38px;margin:13px 0}
+.hero p{color:#c1d0c5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);
+gap:12px;margin-top:25px}
+.stat{background:#ffffff12;border-radius:10px;padding:14px}
+.stat b{display:block;font-size:25px;color:var(--gold)}
+.stat span{font-size:12px;color:#c0d0c4}
+nav{display:flex;gap:9px;overflow-x:auto;margin:22px 0}
+nav button{background:var(--panel);color:var(--muted);
+white-space:nowrap}
+nav button.active{background:var(--gold);color:#17231a}
+.section{background:var(--panel);border:1px solid #294333;
+border-radius:14px;padding:20px;margin-bottom:18px}
+h2{font-size:18px;margin:0 0 17px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:normal}
+td,th{padding:13px 8px;border-bottom:1px solid #294333}
+td:last-child,th:last-child{text-align:right}
+.team{font-weight:bold}
+.points{color:var(--gold);font-weight:bold}
+.match{display:flex;align-items:center;justify-content:space-between;
+gap:10px;padding:15px 0;border-bottom:1px solid #294333}
+.match:last-child{border:0}
+.match small{display:block;color:var(--muted);margin-top:5px}
+.score{background:#0b1712;padding:10px 14px;border-radius:8px;
+font-weight:bold;white-space:nowrap}
+.tag{font-size:10px;color:var(--gold);letter-spacing:1px}
+.player-row{display:flex;justify-content:space-between;
+padding:12px 0;border-bottom:1px solid #294333}
+.muted{color:var(--muted);font-size:13px}
+input{width:100%;padding:12px;margin:7px 0 14px;
+background:#0b1712;color:white;border:1px solid #345941;
+border-radius:8px}
+#login{display:none;max-width:420px;margin:25px auto}
+footer{text-align:center;color:var(--muted);padding:25px;font-size:12px}
+@media(max-width:600px){
+ header{padding:18px}.logo{font-size:18px}
+ .hero h1{font-size:29px}.stats{gap:7px}
+ .stat{padding:10px}.stat b{font-size:20px}
+ main{padding:17px 12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">FRIENDS <span>LEAGUE</span></div>
+    <div class="season">SEASON 01 · 2026/27</div>
+  </div>
+  <button class="gold" onclick="showLogin()">ADMIN LOGIN</button>
+</header>
+
+<main>
+  <section class="hero">
+    <small>THE FRIENDS. THE GAME. THE GLORY.</small>
+    <h1>THE GAME IS ON.</h1>
+    <p>Four teams. Six weeks. One champion.</p>
+    <div class="stats">
+      <div class="stat"><b>04</b><span>TEAMS</span></div>
+      <div class="stat"><b id="playerCount">0</b><span>PLAYERS</span></div>
+      <div class="stat"><b>12</b><span>MATCHES</span></div>
+    </div>
+  </section>
+
+  <nav>
+    <button class="active" onclick="showTab('table',this)">Standings</button>
+    <button onclick="showTab('fixtures',this)">Fixtures</button>
+    <button onclick="showTab('scorers',this)">Top Scorers</button>
+    <button onclick="showTab('assists',this)">Assists</button>
+  </nav>
+
+  <section id="content" class="section">
+    <h2>LEAGUE TABLE</h2>
+    <p class="muted">Loading league data...</p>
+  </section>
+
+  <section id="login" class="section">
+    <h2>CHICKEN · ADMIN LOGIN</h2>
+    <p class="muted">Sign in to access league management.</p>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="Admin email">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Password">
+    <button class="gold" onclick="adminLogin()">LOGIN</button>
+    <button class="dark" onclick="hideLogin()">CANCEL</button>
+    <p id="loginMessage" class="muted"></p>
+  </section>
+</main>
+
+<footer>FRIENDS LEAGUE · SEASON 01 · MADE FOR THE LOVE OF FOOTBALL</footer>
+
+<script>
+// Add your own Supabase project details here.
+const SUPABASE_URL = "https://uxdrueduoylcpnttnqqq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_uoPmQ2PGyZcsLBh_xA-BVg_1GWOsjMj";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let teams=[],players=[],matches=[],events=[],currentTab="table";
+
+async function loadData(){
+  try{
+    const results=await Promise.all([
+      db.from("teams").select("*"),
+      db.from("players").select("*"),
+      db.from("matches").select("*"),
+      db.from("match_events").select("*")
+    ]);
+    for(const r of results){
+      if(r.error) throw r.error;
+    }
+    teams=results[0].data||[];
+    players=results[1].data||[];
+    matches=results[2].data||[];
+    events=results[3].data||[];
+    document.getElementById("playerCount").textContent=players.length;
+    render();
+  }catch(e){
+    document.getElementById("content").innerHTML=
+      "<h2>Unable to load league data</h2><p class='muted'>"+
+      safe(e.message)+"</p>";
+  }
+}
+
+function safe(v){
+  return String(v??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function teamName(id){
+  return teams.find(t=>t.id===id)?.name||"TBD";
+}
+function playerName(id){
+  return players.find(p=>p.id===id)?.name||"Unknown";
+}
+
+function getStandings(){
+  return teams.map(t=>{
+    let p=0,w=0,d=0,l=0,gf=0,ga=0;
+    matches.filter(m=>m.status==="played").forEach(m=>{
+      if(m.home_team_id!==t.id&&m.away_team_id!==t.id)return;
+      p++;
+      if(m.home_team_id===t.id){
+        gf+=m.home_score;ga+=m.away_score;
+      }else{
+        gf+=m.away_score;ga+=m.home_score;
+      }
+      if(m.home_score===m.away_score)d++;
+      else if((m.home_team_id===t.id&&m.home_score>m.away_score)||
+              (m.away_team_id===t.id&&m.away_score>m.home_score))w++;
+      else l++;
+    });
+    return {name:t.name,p,w,d,l,gf,ga,gd:gf-ga,pts:w*3+d};
+  }).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf);
+}
+
+function render(){
+  const box=document.getElementById("content");
+  if(currentTab==="table"){
+    const rows=getStandings();
+    box.innerHTML="<h2>LEAGUE TABLE</h2><table><thead><tr>"+
+    "<th>#</th><th>TEAM</th><th>MP</th><th>W</th><th>D</th>"+
+    "<th>L</th><th>GD</th><th>PTS</th></tr></thead><tbody>"+
+    rows.map((t,i)=>`<tr><td>${i+1}</td><td class="team">${safe(t.name)}</td>
+    <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+    <td>${t.gd}</td><td class="points">${t.pts}</td></tr>`).join("")+
+    "</tbody></table>";
+  }
+  if(currentTab==="fixtures"){
+    box.innerHTML="<h2>FIXTURES & RESULTS</h2>"+
+    matches.sort((a,b)=>a.match_week-b.match_week).map(m=>
+    `<div class="match"><div><span class="tag">WEEK ${m.match_week}</span>
+    <div>${safe(teamName(m.home_team_id))} <b>VS</b>
+    ${safe(teamName(m.away_team_id))}</div>
+    <small>${safe(m.match_date)}</small></div>
+    <div class="score">${m.status==="played"?
+    m.home_score+" - "+m.away_score:"VS"}</div></div>`).join("");
+  }
+  if(currentTab==="scorers"||currentTab==="assists"){
+    const map={};
+    events.forEach(e=>{
+      const id=currentTab==="scorers"?
+        (e.event_type==="goal"?e.player_id:null):
+        e.assist_player_id;
+      if(id)map[id]=(map[id]||0)+1;
+    });
+    const list=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    box.innerHTML="<h2>"+(currentTab==="scorers"?
+      "GOLDEN BOOT · TOP SCORERS":"TOP PLAYMAKERS · ASSISTS")+"</h2>"+
+      (list.length?list.map(([id,n],i)=>
+      `<div class="player-row"><span>${i+1}. ${safe(playerName(id))}</span>
+      <b class="points">${n}</b></div>`).join(""):"<p class='muted'>No statistics yet. Let the games begin!</p>");
+  }
+}
+
+function showTab(tab,button){
+  currentTab=tab;
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
+  render();
+}
+function showLogin(){
+  document.getElementById("login").style.display="block";
+  document.getElementById("login").scrollIntoView({behavior:"smooth"});
+}
+function hideLogin(){
+  document.getElementById("login").style.display="none";
+}
+async function adminLogin(){
+  const message=document.getElementById("loginMessage");
+  message.textContent="Checking account...";
+  const {data,error}=await db.auth.signInWithPassword({
+    email:document.getElementById("email").value,
+    password:document.getElementById("password").value
+  });
+  if(error){message.textContent=error.message;return;}
+  const {data:admin,error:checkError}=await db
+    .from("admin_users").select("admin_name")
+    .eq("user_id",data.user.id).maybeSingle();
+  if(checkError||!admin){
+    await db.auth.signOut();
+    message.textContent="This account is not an authorized league admin.";
+    return;
+  }
+  message.textContent="Welcome, "+admin.admin_name+"! Admin verified.";
+}
+
+loadData();
+</script>
+</body>
+</html>
